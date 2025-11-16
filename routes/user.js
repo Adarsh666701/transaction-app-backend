@@ -5,6 +5,7 @@ const user = require('../db/db/User');
 const jwt = require('jsonwebtoken');
 
 
+
 router.get('/', (req,res)=>{
     res.send("User route working fine")
 })
@@ -40,7 +41,6 @@ router.post('/signUp', async (req,res)=>{
         message: "User created successfully",
         token,
     });
-
 })
 
 const loginSchema = zod.object({
@@ -70,5 +70,52 @@ router.post('/login,', async (req,res)=>{
         token,
     });
 })
+
+const updateBodySchema = zod.object({
+    firstName: zod.string().min(1,"First name is required").optional(),
+    lastName: zod.string().min(1,"Last name is required").optional(),
+    email: zod.string().email("Invalid email address").optional(),
+})
+
+
+router.put('/updateInfo',authMiddleware, async (req,res)=>{
+    const body = req.body;
+    const {success} = updateBodySchema.safeParse(body);
+    if(!success){
+        return res.status(411).json({message: "Invalid Body Request"})
+    }
+
+    await user.updateOne({id:req.userID}, body);
+
+    res.status(200).json({message: "User info updated successfully"})
+
+})
+
+
+router.get("/bulk", authMiddleware, async (req,res)=>{
+
+    const filter = req.query.filter || "";
+    
+    const users = await user.find({
+        $or:[
+            {
+                firstName: {$regex:filter}
+            },
+            {
+                lastName: {$regex:filter}
+            }
+        ]
+    });
+
+    res.status(200).json({
+        user: users.map(user=>({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            id: user._id
+        }))
+    });
+})
+
 
 module.exports = router;

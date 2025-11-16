@@ -54,4 +54,24 @@ userSchema.methods.matchPassword = async function(enteredPassword){
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+
+const bankSchema = new mongoose.Schema({
+    userId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
+    balance:{
+        type:Number,
+        required:true,
+        default:0
+    }
+})
+
+const Bank = mongoose.model('Bank', bankSchema);
+
+module.exports = {
+    connectDB,
+    User,
+    Bank
+}
